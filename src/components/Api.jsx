@@ -1,28 +1,30 @@
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import "./Api.css";
-import exampleImage from "./example.jpg";
 
 const Api = () => {
-  let [data, setData] = useState([]);
+  const [data, setData] = useState([]);
   const [view, setView] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
+  const nameRef = useRef();
+  const priceRef = useRef();
 
-  let name = useRef();
-  let price = useRef();
+  // Fetch data
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  //get data
-  let fetchData = () => {
+  const fetchData = () => {
     axios.get("http://localhost:3001/post").then((res) => {
       setData(res.data);
     });
   };
 
-  //add data
-  let handleSubmit = () => {
-    let newData = {
-      name: name.current.value,
-      price: price.current.value,
+  // Add data
+  const handleSubmit = () => {
+    const newData = {
+      name: nameRef.current.value,
+      price: priceRef.current.value,
     };
 
     axios.post("http://localhost:3001/post", newData).then((res) => {
@@ -30,43 +32,32 @@ const Api = () => {
     });
   };
 
-  //delete data
-  let deleteData = (id) => {
-    axios.delete(`http://localhost:3001/post/${id}`).then((res) => {
+  // Delete data
+  const deleteData = (id) => {
+    axios.delete(`http://localhost:3001/post/${id}`).then(() => {
       setData(data.filter((val) => val.id !== id));
     });
   };
 
-  //update data
-  //set view
-  let viewData = (index) => {
-    let user = data[index];
-    setView(user);
-  };
-
-  let handleView = (e) => {
-    setView({ ...view, [e.target.name]: e.target.value });
-  };
-
-
-  //updata
-  let handleUpdate = () => {
+  // Update data
+  const handleUpdate = () => {
     axios.put(`http://localhost:3001/post/${view.id}`, view).then((res) => {
       setData(
-        data.map((val, ind) => {
-          if (val.id === res.data.id) {
-            return res.data;
-          } else {
-            return val;
-          }
+        data.map((val) => {
+          return val.id === res.data.id ? res.data : val;
         })
       );
     });
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Set view
+  const viewData = (index) => {
+    setView(data[index]);
+  };
+
+  const handleView = (e) => {
+    setView({ ...view, [e.target.name]: e.target.value });
+  };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -79,8 +70,8 @@ const Api = () => {
   return (
     <div className="container">
       <div className="input-section">
-        <input type="text" name="name" ref={name} placeholder="Enter Name" />
-        <input type="number" name="price" ref={price} placeholder="Enter Price" />
+        <input type="text" name="name" ref={nameRef} placeholder="Enter Name" />
+        <input type="number" name="price" ref={priceRef} placeholder="Enter Price" />
         <button onClick={handleSubmit}>Add</button>
       </div>
       <div className="update-section">
@@ -110,22 +101,27 @@ const Api = () => {
           onChange={handleSearch}
         />
       </div>
-      <div className="row ">
-        {filteredData.map((val, ind) => (
-          <div key={val.id} className="card">
-            <div className="card-body">
-              <h5 className="card-title"><b>{val.name}</b></h5>
-              <img src={exampleImage} alt="Example" className="card-image" />
-              <h6 className="card-subtitle mb-2 text-muted">{val.price}</h6>
-              <p className="card-text">
-                Lorem Ipsum is simply dummy text of the printing and typesetting industry...
-              </p>
-              <button onClick={() => deleteData(val.id)}>Delete</button>
-              <button onClick={() => viewData(ind)}>Update</button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Image</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredData.map((val, ind) => (
+            <tr key={val.id}>
+              <td>{val.name}</td>
+              <td>{val.price}</td>
+              <td>
+                <button onClick={() => deleteData(val.id)}>Delete</button>
+                <button onClick={() => viewData(ind)}>Update</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
